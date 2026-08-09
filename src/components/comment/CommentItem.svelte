@@ -76,6 +76,9 @@
   }
 
   function toggleReplyPreview() {
+    // 内容为空时不允许切换预览
+    if (!replyContent.trim()) return;
+
     if (!replyShowPreview) {
       replyPreviewHtml = parseMarkdown(replyContent);
       replyMarkdownWarnings = validateMarkdown(replyContent);
@@ -319,7 +322,8 @@
 
           <div class="flex justify-end gap-2">
             <button type="button" on:click={toggleReplyPreview}
-              class="rounded px-3 py-1 text-sm text-[var(--text-color)] border border-[var(--button-border-color)] hover:bg-[var(--button-hover-color)]">
+              disabled={!replyContent.trim()}
+              class="rounded px-3 py-1 text-sm text-[var(--text-color)] border border-[var(--button-border-color)] hover:bg-[var(--button-hover-color)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent">
               {replyShowPreview ? (t('comments.write') || '撰写') : (t('comments.preview') || '预览')}
             </button>
             <button type="button" on:click={() => {
@@ -363,9 +367,9 @@
           </div>
         {/each}
         {#if hasHiddenReplies}
-          <div class="flex justify-start mt-3">
+          <div class="flex justify-center mt-3">
             <button on:click={() => showAllReplies = !showAllReplies}
-              class="px-6 py-2.5 rounded-lg border border-[var(--button-border-color)] text-sm font-medium text-[var(--text-color)] bg-transparent hover:bg-[var(--button-hover-color)] transition-all duration-300 ease-in-out">
+              class="px-6 py-2.5 w-full text-sm font-medium text-[var(--text-color)] bg-transparent hover:bg-[var(--button-hover-color)] active:bg-[var(--button-hover-color)] transition-all duration-300 ease-in-out">
               {showAllReplies ? t('comments.collapseReplies') : t('comments.showMoreReplies')}
             </button>
           </div>
@@ -398,9 +402,9 @@
           </div>
         {/each}
         {#if hasHiddenMobileReplies}
-          <div class="flex justify-start mt-3">
+          <div class="flex justify-center mt-3">
             <button on:click={() => showAllReplies = !showAllReplies}
-              class="px-6 py-2.5 rounded-lg border border-[var(--button-border-color)] text-sm font-medium text-[var(--text-color)] bg-transparent hover:bg-[var(--button-hover-color)] transition-all duration-300 ease-in-out">
+              class="px-6 py-2.5 w-full text-sm font-medium text-[var(--text-color)] bg-transparent hover:bg-[var(--button-hover-color)] active:bg-[var(--button-hover-color)] transition-all duration-300 ease-in-out">
               {showAllReplies ? t('comments.collapseReplies') : t('comments.showMoreReplies')}
             </button>
           </div>

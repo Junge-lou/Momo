@@ -42,6 +42,10 @@ The primary configuration files for the website are `astro.config.mjs` and `src/
     * `AOS`: Enable AOS animations
     * `LQIP`: Enable LQIP
     * `PohotSwipe`: Enable PhotoSwipe
+    * `postCard`
+        * `imageMode`: Cover image mode for article cards
+            * `"top"`: The image is displayed above the card content (default)
+            * `"background"`: The image is used as the card background, fading to transparent from right to left
 
 :::tip
 For the backend project, refer to [Momo-backend](https://github.com/Motues/Momo-Backend). Ensure all configurations are completed as specified, particularly for cross-domain domains.

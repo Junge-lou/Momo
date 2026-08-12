@@ -42,6 +42,10 @@ slugId: momo/intro/config
     * `AOS`: 是否启用AOS动画
     * `LQIP`: 是否启用LQIP
     * `PohotSwipe`: 是否启用图片灯箱模式
+    * `postCard`
+        * `imageMode`: 首页文章卡片封面图的展示模式
+            * `"top"`: 图片单独显示在卡片内容顶部（默认）
+            * `"background"`: 图片作为卡片背景，从右向左逐渐渐隐
 
 :::tip
 后端项目参考[Momo-backend](https://github.com/Motues/Momo-Backend)进行部署，一定需要按照要求进行配置，尤其是跨域的域名认证

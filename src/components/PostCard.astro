@@ -8,6 +8,7 @@ import { getCollection, render } from 'astro:content'
 import { getRelativeLocaleUrl } from '@utils/url-utils';
 import { formatFullDate } from '@/utils/time'
 
+import { siteConfig } from '@/config';
 import { i18n } from "astro:config/client";
 import i18nit from '@i18n/translation'
 import { Icon } from "astro-icon/components";
@@ -29,13 +30,24 @@ const t = i18nit(currentLang);
 
 const pageUrl = getRelativeLocaleUrl(currentLang, "/blog/" + url);
 const { remarkPluginFrontmatter } = await render(entry);
+
+// 首页文章卡片封面图模式："background" 将图片作为卡片背景，从右向左渐隐
+const isBgMode = siteConfig.theme.postCard.imageMode === "background";
 ---
 
-<div data-aos="fade-up"  class="block min-w-0 w-full max-w-[var(--page-width)] mx-auto my-6  rounded-xl shadow border border-[var(--button-border-color)] overflow-hidden">
+<div data-aos="fade-up"  class:list={["block min-w-0 w-full max-w-[var(--page-width)] mx-auto my-6  rounded-xl shadow border border-[var(--button-border-color)] overflow-hidden", isBgMode && "postcard-bg-mode", isBgMode && image && "has-image"]}>
     {image && (
-        <a href={pageUrl} class="cover h-60 overflow-hidden hover-scale block">
-            <ImageModule src={image} alt={title} class="w-full h-full object-cover"/>
-        </a>
+        <>
+        {isBgMode ? (
+            <div class="bg-image">
+                <ImageModule src={image} alt={title} class="w-full h-full" />
+            </div>
+        ) : (
+            <a href={pageUrl} class="cover h-60 overflow-hidden hover-scale block">
+                <ImageModule src={image} alt={title} class="w-full h-full object-cover"/>
+            </a>
+        )}
+        </>
     )}
     <div class="content p-6">
         <a href={pageUrl} class="title text-xl font-semibold text-[var(--text-color)] mb-3 hover:text-[var(--link-color)] active:text-[var(--link-color)] flex items-center group transition-colors duration-300 ease-in-out">
@@ -98,5 +110,51 @@ const { remarkPluginFrontmatter } = await render(entry);
   color: var(--link-color);
   background-color: var(--button-hover-color);
   text-shadow: 0.5px 0 0 currentColor, -0.5px 0 0 currentColor;
+}
+
+/* ===== 背景图模式：图片作为卡片背景，从右向左非线性渐隐 ===== */
+.postcard-bg-mode {
+  position: relative;
+}
+
+.postcard-bg-mode > .bg-image {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.postcard-bg-mode > .bg-image .image-wrapper {
+  width: 100%;
+  height: 100%;
+  opacity: 0.7; /* 图片整体保持一定透明度，避免与文字抢视觉 */
+  transition: transform 0.4s ease;
+  /* 桌面端：从右向左渐隐，约一半位置图片完全消失，多段渐变近似平滑（非线性）曲线 */
+  -webkit-mask-image: linear-gradient(to left, #000 0%, #000 35%, rgba(0,0,0,0.85) 44%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
+          mask-image: linear-gradient(to left, #000 0%, #000 35%, rgba(0,0,0,0.85) 44%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
+}
+
+.postcard-bg-mode:hover > .bg-image .image-wrapper {
+  transform: scale(1.03);
+}
+
+.postcard-bg-mode > .content {
+  position: relative;
+  z-index: 1;
+}
+
+/* 移动端：图片从上到下渐变、约一半位置消失，顶部留白展示图片，卡片整体加高 */
+@media (max-width: 640px) {
+  .postcard-bg-mode.has-image > .bg-image .image-wrapper {
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 48%, rgba(0,0,0,0.15) 55%, transparent 60%, transparent 100%);
+  }
+
+  /* 顶部留白区域展示图片，文字从下方开始，卡片更高 */
+  .postcard-bg-mode.has-image > .content {
+    padding-top: 6rem;
+  }
 }
 </style>

@@ -21,6 +21,9 @@ export type SiteConfig = {
         AOS: boolean;
         LQIP: boolean;
         PhotoSwipe: boolean;
+        postCard: {
+            imageMode: "top" | "background"; 
+        };
     }
 }
 

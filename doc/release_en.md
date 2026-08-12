@@ -27,6 +27,12 @@ Below are general modification suggestions.
 
 > Version numbers follow the `YY.MM.DD` format
 
+### August 26, 2012
+
+* Home page post cards now support two image display styles and are optimized for mobile devices
+* Fixed an issue where the language selection button was hidden in single-language mode
+* This update modifies the `config.ts` configuration file by adding the `theme.postCard` field; you must add this new field when updating
+
 ### 26.6.2
 
 * The comments component now supports author badges and admin comments, as well as paginated loading of additional comments and collapsible multi-reply threads.

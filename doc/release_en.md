@@ -27,7 +27,18 @@ Below are general modification suggestions.
 
 > Version numbers follow the `YY.MM.DD` format
 
-### August 26, 2012
+### 26.8.15
+
+> This is a breaking update. Please read the release notes below carefully!
+
+* This update upgrades the project from Astro5 to Astro7. The old version has been archived to the `v5` branch and will no longer be maintained
+* Astro7 requires Node.js version >= 22; we recommend using version 24 LTS. After upgrading, you must clear your local cache (folders such as `/node_modules`) before you can compile and preview locally
+* This update modifies the configuration files `content.config.ts` and `astro.config.mjs`
+* If you encounter any issues after upgrading, please feel free to submit an issue to provide feedback
+
+Translated with DeepL.com (free version)
+
+### 26.8.12
 
 * Home page post cards now support two image display styles and are optimized for mobile devices
 * Fixed an issue where the language selection button was hidden in single-language mode

@@ -172,7 +172,6 @@ if (typeof window !== 'undefined') {
     
     /* 核心毛玻璃设置 */
     background-color: rgba(255, 255, 255, 0.7); /* 半透明白色 */
-    backdrop-filter: blur(10px);              /* 模糊程度 */
     -webkit-backdrop-filter: blur(10px);      /* 兼容 Safari */
     
     color: #1a1a1a;
@@ -190,6 +189,15 @@ if (typeof window !== 'undefined') {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     white-space: nowrap;
     pointer-events: none;
+  }
+
+  /* 支持标准 backdrop-filter 的浏览器（Chrome 76+ / Firefox 103+ / Safari 18+）。
+     必须与 -webkit- 前缀版分开写：构建时的 CSS 压缩器会把这两个属性当作同一属性合并，
+     只保留后写的那条；单独放进 @supports 里，构建后标准属性才不会被删掉。 */
+  @supports (backdrop-filter: blur(1px)) {
+    :global(#theme-toast) {
+      backdrop-filter: blur(10px); /* 模糊程度 */
+    }
   }
 
   /* 显示状态 */

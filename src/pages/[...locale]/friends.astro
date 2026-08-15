@@ -47,7 +47,7 @@ const pageTitle = t("header.friends") + " - " + siteConfig.title;
                                 onerror="this.src='https://www.gravatar.com/avatar/?d=mp'"
                             />
                             <div class="min-w-0">
-                                <h2 class="font-bold text-lg truncate transition-colors duration-300 group-hover:text-[var(--link-color)]">{friend.name}</h2>
+                                <h2 class="font-bold text-lg truncate transition-colors duration-300 group-hover:text-[var(--link-color)] group-active:text-[var(--link-color)]">{friend.name}</h2>
                                 <p class="text-[var(--text-color-70)] text-sm truncate">{friend.description}</p>
                             </div>
                         </div>
@@ -58,7 +58,7 @@ const pageTitle = t("header.friends") + " - " + siteConfig.title;
                             viewBox="0 0 24 24" 
                             stroke-width="2" 
                             stroke="currentColor" 
-                            class="w-5 h-5 text-[var(--link-color)] opacity-0 transform translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ml-2 flex-shrink-0"
+                            class="w-5 h-5 text-[var(--link-color)] opacity-0 transform translate-x-[-10px] group-hover:opacity-100 group-hover:translate-x-0 group-active:opacity-100 group-active:translate-x-0 transition-all duration-300 ml-2 flex-shrink-0"
                         >
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>

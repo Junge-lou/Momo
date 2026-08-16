@@ -72,6 +72,7 @@ if (isLocal) {
             height={height} 
             loading="lazy"
             class=""
+            onload="this.parentElement.dataset.loaded = 'true'" 
         />
         )
     }

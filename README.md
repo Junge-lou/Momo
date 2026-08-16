@@ -56,6 +56,7 @@ Momo 取自小红书📕，每个新用户最初的昵称，象征着初始新�
 | `pnpm preview` | 预览构建后的发布版本 |
 | `pnpm astro ...` | 运行 `astro` 命令，例如 `astro add` |
 | `pnpm newpost <path> <lang>` | 创建新文章，例如 `pnpm newpost docs/test.md zh-cn`，语言可以省略，默认为`zh-cn` |
+| `pnpm cms` | 启动本地 CMS 管理后台，运行在 `http://localhost:5188`（首次使用前先执行 `pnpm install`） |
 
 
 ## 📚 参考

@@ -111,8 +111,8 @@ function buildToolbar(getMd: () => HTMLTextAreaElement | null): HTMLElement {  c
     noteSelect,
     el('button', {
       class: 'tool-btn',
-      title: '提示块 ::note[内容]（上方下拉选择类型）',
-      onclick: () => applyTool(getMd(), { wrap: [`::${noteSelect.value}[`, ']'] }),
+      title: '提示块 :::note{name="提示"} 内容 :::（上方下拉选择类型）',
+      onclick: () => applyTool(getMd(), { template: `:::${noteSelect.value}{name="提示"}\n{sel}{cur}{ph:内容}\n:::` }),
     }, ['提示块']),
     btn({ label: 'GitHub', title: 'GitHub 仓库卡片 ::github{repo="owner/repo"}', template: '::github{repo="{cur}owner/repo"}' }),
     btn({ label: '音乐', title: '网易云音乐卡片 ::music{id="歌曲ID"}', template: '::music{id="{cur}歌曲ID"}' }),
@@ -141,9 +141,12 @@ function applyTool(md: HTMLTextAreaElement | null, tool: { wrap?: [string, strin
     const t = tool.template as string
     const hasSel = sel.length > 0
     const useSel = t.includes('{sel}')
-    const pre = t.replace('{sel}', hasSel ? sel : '')
-    const curIdx = pre.indexOf('{cur}')
-    text = pre.replace('{cur}', '')
+    // {ph:占位词} 仅在无选中时保留，避免与选中内容叠加；{cur} 用哨兵标记后定位光标
+    const sentinel = '\u0000'
+    const withCur = t.replace('{sel}', hasSel ? sel : '').replace('{cur}', sentinel)
+    const resolved = withCur.replace(/\{ph:([^}]*)\}/g, hasSel ? '' : '$1')
+    const curIdx = resolved.indexOf(sentinel)
+    text = resolved.replace(sentinel, '')
     caret = hasSel && useSel ? text.length : Math.max(0, curIdx)
   }
 
@@ -163,6 +166,7 @@ function buildShell(root: HTMLElement, state: EditorState) {
         el('div', { class: 'editor-tabs', id: 'lang-tabs' }),
         el('div', { class: 'editor-actions' }, [
           el('span', { class: 'dirty-badge', id: 'dirty-badge', hidden: true }, ['● 未保存']),
+          el('button', { class: 'btn', id: 'btn-open-blog', title: '在博客中打开当前文章（新标签页）', onclick: () => openInBlog(state) }, ['打开博客']),
           el('button', { class: 'btn', onclick: () => togglePreview() }, ['预览开/关']),
           el('button', { class: 'btn btn-danger', onclick: () => doDelete(state) }, ['删除']),
           el('button', { class: 'btn btn-primary', id: 'btn-save', onclick: () => doSave(state) }, [
@@ -199,7 +203,7 @@ function buildShell(root: HTMLElement, state: EditorState) {
           ]),
           el('label', { class: 'form-field' }, [
             'slugId',
-            el('input', { class: 'input mono', id: 'f-slugid', placeholder: '文章路径，修改会移动文件夹' }),
+            el('input', { class: 'input mono', id: 'f-slugid', placeholder: '文章标识，如 momo/xxx（不影响文件夹位置）' }),
           ]),
           el('label', { class: 'form-field wide' }, [
             '封面图',
@@ -229,7 +233,7 @@ function buildShell(root: HTMLElement, state: EditorState) {
           class: 'md-editor',
           id: 'md-editor',
           spellcheck: false,
-          placeholder: '在这里编写 Markdown 正文…\n\n支持博客全部自定义语法：::note{}、$公式$、```typst、::github{}、{注音}(かたかな)、!!折叠!!、==彩虹==、++下划线++',
+          placeholder: '在这里编写 Markdown 正文…\n\n支持博客全部自定义语法：:::note{...}、$公式$、```typst、::github{}、{注音}(かたかな)、!!折叠!!、==彩虹==、++下划线++',
         }),
       ]),
       el('section', { class: 'editor-right', id: 'editor-right' }, [
@@ -499,6 +503,21 @@ async function doDelete(state: EditorState) {
   } catch (e) {
     toast((e as Error).message, 'error')
   }
+}
+
+// 打开博客中当前文章（新标签页）；博客地址默认 http://localhost:4321，
+// 可用 localStorage 键 cms-blog-base 覆盖（例如博客端口不同时）
+function blogOrigin(): string {
+  try {
+    return localStorage.getItem('cms-blog-base') || 'http://localhost:4321'
+  } catch {
+    return 'http://localhost:4321'
+  }
+}
+
+function openInBlog(state: EditorState) {
+  const url = `${blogOrigin()}/blog/${encodePath(state.path)}`
+  window.open(url, '_blank', 'noopener')
 }
 
 function pickFile(state: EditorState) {

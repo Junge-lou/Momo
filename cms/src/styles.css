@@ -367,6 +367,50 @@ body {
 
 .article-table td .badge + .badge { margin-left: 4px; }
 
+/* 行内操作按钮 */
+.article-table th.actions,
+.article-table td.actions {
+  width: 100px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.row-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.row-act + .row-act { margin-left: 4px; }
+
+.row-act:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.row-act.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.row-act-danger { color: var(--danger); }
+.row-act-danger:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+
 /* ---------- 概览页 ---------- */
 .stat-grid {
   display: grid;

@@ -19,11 +19,11 @@ pnpm cms
 ## 功能
 
 - **概览页**（`#/`）：文章总数 / 已发布 / 草稿 / 置顶 / 分类数 / 正文总字数统计，分类分布条形图，语言版本覆盖（中英双语），最近文章列表
-- **文章列表**（`#/list`）：搜索、分类筛选、草稿/已发布筛选、语言徽章；支持**卡片 / 表格**两种视图模式（localStorage 记忆选择）与**多种排序**（默认置顶+日期 / 发布日期升降序 / 标题 / 路径 / 分类，中文按拼音排序）
+- **文章列表**（`#/list`）：搜索、分类筛选、草稿/已发布筛选、语言徽章；支持**卡片 / 表格**两种视图模式（localStorage 记忆选择）与**多种排序**（默认置顶+日期 / 发布日期升降序 / 标题 / 路径 / 分类，中文按拼音排序）；表格右侧**行内操作**（置顶/取消置顶、草稿/发布切换、删除）
 - **Markdown 编辑器**：frontmatter 表单 + 正文源码，左侧编辑右侧**实时预览**（防抖 500ms）；编辑区上方**快速插入工具栏**（加粗/斜体/行内代码/链接/图片/引用、代码块/Typst、行内/块公式、提示块（note/tip/important/caution/warning）、GitHub/音乐卡片、注音/折叠/彩虹/下划线），支持选中文本包裹与光标定位
 - **完整自定义语法预览**：与博客渲染管线一致（见下方语法表）
 - **多语言版本**：同路径 `zh-cn.md` / `en.md` 标签页切换，可新建缺失的语言版本
-- **slugId 重命名**：修改 slugId 保存时自动移动整个文件夹（所有语言版本）
+- **slugId**：文章/评论标识元数据（如 `momo/xxx`），与文件夹位置解耦，保存时**不会**改变文件夹；仅当 slugId 与当前文件夹路径一致（CMS 新建的文章）且被修改时才整体移动文件夹
 - **封面图上传**：图片直接保存到文章文件夹，自动填写 `image: ./xxx.png`
 - **删除保护**：删除前二次确认，未保存内容离开页面时提醒
 - **深色模式**：跟随系统
@@ -37,7 +37,7 @@ cms/
 ├── index.html            # SPA 外壳
 ├── server/               # Hono 服务端（Node ESM，由 Vite SSR 加载）
 │   ├── index.mjs         # 应用入口：/api/* 路由 + SPA 回退 + 静态资源
-│   ├── store.mjs         # 博客文章文件统一读写层（CRUD / slugId 移动 / 分类统计）
+│   ├── store.mjs         # 博客文章文件统一读写层（CRUD / slugId 元数据 / 分类统计）
 │   ├── articles.mjs      # GET/POST/PUT/DELETE /api/articles/*
 │   ├── preview.mjs       # POST /api/preview：复用博客全部 remark/rehype 插件
 │   ├── upload.mjs        # POST /api/upload：封面图上传（multipart）
@@ -61,7 +61,7 @@ cms/
 | GET | `/api/articles?q=&category=&draft=` | 文章列表（分组、筛选、搜索） |
 | GET | `/api/articles/:path` | 读取文章全部语言版本 |
 | POST | `/api/articles` | 新建文章 `{ path, lang }` |
-| PUT | `/api/articles/:path/:lang` | 保存 `{ data, body }`；slugId 变更时自动移动 |
+| PUT | `/api/articles/:path/:lang` | 保存 `{ data, body }`；仅当 slugId 与路径一致且被修改时移动文件夹 |
 | DELETE | `/api/articles/:path` | 删除整篇文章（文件夹） |
 | POST | `/api/preview` | 实时预览 `{ data, body, base }` → 完整 HTML 文档 |
 | POST | `/api/upload` | 上传封面图（multipart: file + path） |
@@ -72,7 +72,7 @@ cms/
 
 | 语法 | 说明 |
 |---|---|
-| `::note[内容]` / `::tip` / `::important` / `::caution` / `::warning` | Alert 提示块 |
+| `:::note{name="提示"}`…`:::`（note/tip/important/caution/warning） | Alert 提示块（块级容器，`{name="..."}` 可选） |
 | `::github{repo="owner/repo"}` | GitHub 仓库卡片 |
 | `::music{id="歌曲ID"}` | 网易云音乐卡片 |
 | `::quote[内容]` | 居中引用组件 |

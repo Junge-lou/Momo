@@ -160,7 +160,7 @@ export async function renderList(root: HTMLElement) {
     listEl.innerHTML = ''
     emptyEl.hidden = sorted.length > 0
     countEl.textContent = `共 ${sorted.length} 篇`
-    if (state.view === 'table') listEl.append(articleTable(sorted))
+    if (state.view === 'table') listEl.append(articleTable(sorted, () => reload()))
     else for (const a of sorted) listEl.append(articleCard(a))
   }
 
@@ -254,9 +254,9 @@ function articleCard(a: ArticleSummary) {
 
 // ---------------- 表格视图 ----------------
 
-function articleTable(articles: ArticleSummary[]) {
+function articleTable(articles: ArticleSummary[], onChanged: () => void) {
   const tbody = el('tbody')
-  for (const a of articles) tbody.append(articleRow(a))
+  for (const a of articles) tbody.append(articleRow(a, onChanged))
   return el('div', { class: 'table-wrap' }, [
     el('table', { class: 'article-table' }, [
       el('thead', {}, [
@@ -267,6 +267,7 @@ function articleTable(articles: ArticleSummary[]) {
           el('th', {}, ['语言']),
           el('th', {}, ['日期']),
           el('th', {}, ['路径']),
+          el('th', { class: 'actions' }, ['操作']),
         ]),
       ]),
       tbody,
@@ -274,7 +275,7 @@ function articleTable(articles: ArticleSummary[]) {
   ])
 }
 
-function articleRow(a: ArticleSummary) {
+function articleRow(a: ArticleSummary, onChanged: () => void) {
   const badges: (HTMLElement | string)[] = []
   if (a.draft) badges.push(el('span', { class: 'badge badge-draft' }, ['草稿']))
   if (a.pinTop) badges.push(el('span', { class: 'badge badge-pin' }, ['置顶']))
@@ -287,7 +288,10 @@ function articleRow(a: ArticleSummary) {
     title: `编辑 ${a.path}`,
     onclick: () => navigate(`#/edit/${encodePath(a.path)}`),
     onkeydown: (e: KeyboardEvent) => {
-      if (e.key === 'Enter') navigate(`#/edit/${encodePath(a.path)}`)
+      // 焦点在操作按钮上时 Enter 触发按钮而非跳转
+      if (e.key === 'Enter' && !(e.target as HTMLElement).closest('button')) {
+        navigate(`#/edit/${encodePath(a.path)}`)
+      }
     },
   }, [
     el('td', {}, [
@@ -299,5 +303,89 @@ function articleRow(a: ArticleSummary) {
     el('td', {}, langs),
     el('td', {}, [a.pubDate || '—']),
     el('td', { class: 'path' }, [a.path]),
+    actionsCell(a, onChanged),
   ])
+}
+
+// ---------------- 表格行内操作 ----------------
+
+function actionsCell(a: ArticleSummary, onChanged: () => void) {
+  const pinBtn = rowActionBtn(
+    '<path d="M12 17v5"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>',
+    a.pinTop ? '取消置顶' : '置顶',
+    a.pinTop ? 'active' : '',
+    () => togglePin(a, onChanged),
+  )
+  const draftBtn = rowActionBtn(
+    '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
+    a.draft ? '标记为已发布' : '标记为草稿',
+    a.draft ? 'active' : '',
+    () => toggleDraft(a, onChanged),
+  )
+  const delBtn = rowActionBtn(
+    '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+    '删除文章',
+    'row-act-danger',
+    () => doRowDelete(a, onChanged),
+  )
+  return el('td', { class: 'actions' }, [pinBtn, draftBtn, delBtn])
+}
+
+// 行内操作按钮：阻止冒泡，避免触发整行的跳转
+function rowActionBtn(iconPath: string, title: string, cls: string, onClick: () => void) {
+  const span = document.createElement('span')
+  span.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPath}</svg>`
+  return el('button', {
+    class: `row-act ${cls}`.trim(),
+    title,
+    type: 'button',
+    onclick: (e: Event) => {
+      e.stopPropagation()
+      onClick()
+    },
+  }, [span])
+}
+
+// 切换置顶 / 草稿：写入该文章全部语言版本的 frontmatter
+async function setFlag(
+  a: ArticleSummary,
+  key: 'pinTop' | 'draft',
+  value: number | boolean,
+  onChanged: () => void,
+  onMsg: string,
+  offMsg: string,
+) {
+  try {
+    const detail = await api.get(a.path)
+    for (const lang of Object.keys(detail.files)) {
+      const f = detail.files[lang]
+      ;(f.data as Record<string, unknown>)[key] = value
+      await api.save(a.path, lang, { data: f.data, body: f.content })
+    }
+    toast(value ? onMsg : offMsg)
+    onChanged()
+  } catch (e) {
+    toast((e as Error).message, 'error')
+  }
+}
+
+function togglePin(a: ArticleSummary, onChanged: () => void) {
+  return setFlag(a, 'pinTop', a.pinTop ? 0 : 1, onChanged, '已置顶', '已取消置顶')
+}
+
+function toggleDraft(a: ArticleSummary, onChanged: () => void) {
+  return setFlag(a, 'draft', !a.draft, onChanged, '已标记为草稿', '已发布')
+}
+
+async function doRowDelete(a: ArticleSummary, onChanged: () => void) {
+  if (!window.confirm(`确定删除文章「${a.title || a.path}」？\n将删除整个文件夹及其所有语言版本，不可恢复。`)) {
+    return
+  }
+  try {
+    await api.remove(a.path)
+    toast('已删除')
+    onChanged()
+  } catch (e) {
+    toast((e as Error).message, 'error')
+  }
 }

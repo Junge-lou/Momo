@@ -104,7 +104,7 @@ export async function readArticle(path) {
   return { path: rel, files }
 }
 
-// 保存文章；若 slugId 与当前路径不同则整体移动
+// 保存文章；文件夹位置以路径为准，slugId 通常只是元数据（如评论 postSlug，形如 momo/xxx）
 export async function saveArticle(path, lang, payload) {
   const rel = safeRel(path)
   if (!rel) return { error: '无效路径' }
@@ -115,13 +115,19 @@ export async function saveArticle(path, lang, payload) {
   if (!newRel) return { error: '无效的 slugId' }
   data.slugId = newRel
 
+  // 读取当前文件已有的 slugId，用于判断是否真的发生了 slugId 修改
+  const raw = await readFile(join(blogPath(rel), `${lang}.md`), 'utf-8').catch(() => null)
+  const oldSlug = raw ? String(matter(raw).data?.slugId ?? '') : ''
+
   const writeOne = async (p, l, d, body) => {
     const file = join(blogPath(p), `${l}.md`)
     await mkdir(dirname(file), { recursive: true })
     await writeFile(file, matter.stringify(body || '', d), 'utf-8')
   }
 
-  if (newRel !== rel) {
+  // 仅当 slugId 与当前文件夹路径一致（CMS 创建的文章，slugId == 路径）且确实被修改时，
+  // 才整体移动文件夹；否则 slugId 只是元数据，绝不改变文件夹位置
+  if (newRel !== rel && oldSlug === rel) {
     // 目标目录已存在且不是当前目录 -> 拒绝，避免覆盖
     const exists = await stat(blogPath(newRel)).then((s) => s.isDirectory()).catch(() => false)
     if (exists) return { error: `目标路径已存在: ${newRel}` }
@@ -130,10 +136,10 @@ export async function saveArticle(path, lang, payload) {
     const oldDir = blogPath(rel)
     for (const l of LANGS) {
       try {
-        const raw = await readFile(join(oldDir, `${l}.md`), 'utf-8')
-        const { data: d } = matter(raw)
+        const r = await readFile(join(oldDir, `${l}.md`), 'utf-8')
+        const { data: d } = matter(r)
         d.slugId = newRel
-        await writeOne(newRel, l, d, matter(raw).content)
+        await writeOne(newRel, l, d, matter(r).content)
       } catch {
         /* 该语言版本不存在 */
       }
